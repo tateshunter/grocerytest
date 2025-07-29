@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Grocery List by Department</title>
+  <style>
+    body { font-family: sans-serif; max-width: 400px; margin: 2em auto; }
+    input { margin: 0.5em 0; width: 100%; padding: 0.5em; }
+    button { padding: 0.5em 1em; margin-bottom: 1em; }
+    li { margin: 0.25em 0; }
+  </style>
+</head>
+<body>
+  <h1>🛒 Grocery List</h1>
+
+  <label>
+    Item name:
+    <input type="text" id="itemInput" placeholder="e.g. Bananas">
+  </label>
+
+  <label>
+    Department:
+    <input type="text" id="deptInput" placeholder="e.g. Produce">
+  </label>
+
+  <button id="addBtn">Add to list</button>
+
+  <ul id="groceryList"></ul>
+
+  <script>
+    const items = [];
+    const itemInput = document.getElementById('itemInput');
+    const deptInput = document.getElementById('deptInput');
+    const listEl   = document.getElementById('groceryList');
+
+    document.getElementById('addBtn').addEventListener('click', () => {
+      const name = itemInput.value.trim();
+      const dept = deptInput.value.trim();
+      if (!name) return alert('Please enter an item name');
+      items.push({ name, dept });
+      // sort by dept, then name
+      items.sort((a, b) => {
+        const d = a.dept.localeCompare(b.dept);
+        return d !== 0 ? d : a.name.localeCompare(b.name);
+      });
+      render();
+      itemInput.value = deptInput.value = '';
+      itemInput.focus();
+    });
+
+    function render() {
+      listEl.innerHTML = '';
+      items.forEach(({ name, dept }) => {
+        const li = document.createElement('li');
+        li.textContent = dept
+          ? `[${dept}]  ${name}`
+          : name;
+        listEl.appendChild(li);
+      });
+    }
+  </script>
+</body>
+</html>
+Add grocery POC
