@@ -4,61 +4,187 @@
   <meta charset="UTF-8">
   <title>Grocery List by Department</title>
   <style>
-    body { font-family: sans-serif; max-width: 400px; margin: 2em auto; }
-    input { margin: 0.5em 0; width: 100%; padding: 0.5em; }
-    button { padding: 0.5em 1em; margin-bottom: 1em; }
-    li { margin: 0.25em 0; }
+    /* basic reset */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f5f7fa;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+    }
+    h1 {
+      margin-bottom: 1rem;
+      color: #2a5d84;
+    }
+    .input-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      width: 100%;
+      max-width: 500px;
+    }
+    .input-row input,
+    .input-row select {
+      flex: 1;
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+    .buttons {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .buttons button {
+      padding: 0.6rem 1rem;
+      border: none;
+      border-radius: 4px;
+      background: #2a5d84;
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .buttons button:hover {
+      background: #1f4764;
+    }
+    #groceryList {
+      list-style: none;
+      width: 100%;
+      max-width: 500px;
+    }
+    #groceryList li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: white;
+      padding: 0.5rem 1rem;
+      margin-bottom: 0.5rem;
+      border-radius: 4px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    #groceryList li.crossed {
+      opacity: 0.6;
+      text-decoration: line-through;
+    }
+    .bubble {
+      width: 20px;
+      height: 20px;
+      border: 2px solid #2a5d84;
+      border-radius: 50%;
+      margin-right: 1rem;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .bubble.checked {
+      background: #2a5d84;
+    }
+    .item-info {
+      flex: 1;
+      display: flex;
+      align-items: center;
+    }
+    .item-info span {
+      font-weight: bold;
+      margin-right: 0.5rem;
+      color: #2a5d84;
+      font-size: 0.9rem;
+    }
+    .item-info small {
+      color: #666;
+      font-size: 0.85rem;
+    }
   </style>
 </head>
 <body>
+
   <h1>🛒 Grocery List</h1>
 
-  <label>
-    Item name:
-    <input type="text" id="itemInput" placeholder="e.g. Bananas">
-  </label>
+  <div class="input-row">
+    <input id="itemInput" type="text" placeholder="Item name (e.g. Bananas)">
+    <select id="deptSelect">
+      <option value="" disabled selected>Choose department…</option>
+      <option>Produce</option>
+      <option>Deli</option>
+      <option>Butcher</option>
+      <option>Aisles Near</option>
+      <option>Aisles Mid</option>
+      <option>Aisles Far</option>
+      <option>Dairy</option>
+    </select>
+  </div>
 
-  <label>
-    Department:
-    <input type="text" id="deptInput" placeholder="e.g. Produce">
-  </label>
-
-  <button id="addBtn">Add to list</button>
+  <div class="buttons">
+    <button id="addBtn">Add Item</button>
+    <button id="resetBtn" style="background:#e05a4f;">Reset</button>
+  </div>
 
   <ul id="groceryList"></ul>
 
   <script>
     const items = [];
     const itemInput = document.getElementById('itemInput');
-    const deptInput = document.getElementById('deptInput');
-    const listEl   = document.getElementById('groceryList');
+    const deptSelect = document.getElementById('deptSelect');
+    const listEl = document.getElementById('groceryList');
+    const addBtn = document.getElementById('addBtn');
+    const resetBtn = document.getElementById('resetBtn');
 
-    document.getElementById('addBtn').addEventListener('click', () => {
+    addBtn.addEventListener('click', () => {
       const name = itemInput.value.trim();
-      const dept = deptInput.value.trim();
-      if (!name) return alert('Please enter an item name');
-      items.push({ name, dept });
-      // sort by dept, then name
-      items.sort((a, b) => {
-        const d = a.dept.localeCompare(b.dept);
-        return d !== 0 ? d : a.name.localeCompare(b.name);
-      });
-      render();
-      itemInput.value = deptInput.value = '';
+      const dept = deptSelect.value;
+      if (!name || !dept) {
+        return alert('Please enter both an item name and select a department.');
+      }
+      items.push({ name, dept, done: false });
+      sortAndRender();
+      itemInput.value = '';
+      deptSelect.selectedIndex = 0;
       itemInput.focus();
     });
 
+    resetBtn.addEventListener('click', () => {
+      if (confirm('Clear the entire list?')) {
+        items.length = 0;
+        render();
+      }
+    });
+
+    function sortAndRender() {
+      items.sort((a, b) => {
+        const d = a.dept.localeCompare(b.dept);
+        return d || a.name.localeCompare(b.name);
+      });
+      render();
+    }
+
     function render() {
       listEl.innerHTML = '';
-      items.forEach(({ name, dept }) => {
+      items.forEach((it, idx) => {
         const li = document.createElement('li');
-        li.textContent = dept
-          ? `[${dept}]  ${name}`
-          : name;
+        if (it.done) li.classList.add('crossed');
+
+        // bubble checkbox
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble' + (it.done ? ' checked' : '');
+        bubble.addEventListener('click', () => {
+          items[idx].done = !items[idx].done;
+          sortAndRender();
+        });
+
+        // item info
+        const info = document.createElement('div');
+        info.className = 'item-info';
+        info.innerHTML = `<span>[${it.dept}]</span> <small>${it.name}</small>`;
+
+        li.append(bubble, info);
         listEl.appendChild(li);
       });
     }
   </script>
+
 </body>
 </html>
-Add grocery POC
